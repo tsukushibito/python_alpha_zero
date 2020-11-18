@@ -4,10 +4,6 @@ services:
         build: .
         container_name: 'alpha_zero'
         working_dir: /alpha_zero/
-        # command: >
-        #     bash -c
-        #     "pipenv install --skip-lock --dev &&
-        #     /bin/sh"
         command: /bin/sh -c "while sleep 1000; do :; done"
         volumes:
             - ./alpha_zero:/alpha_zero:cached
