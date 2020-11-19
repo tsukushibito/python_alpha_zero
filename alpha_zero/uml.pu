@@ -5,7 +5,7 @@ interface Action {
 }
 
 interface GameState {
-    + depth: int
+    + depth(): int
     + current_player(): int
     + player0_board(): list[int]
     + player1_board(): list[int]
@@ -16,13 +16,9 @@ interface GameState {
 
 class Game {
     - _state: GameState
-    + depth(): int
-    + current_player(): int
-    + player0_board(): list[int]
-    + player1_board(): list[int]
-    + is_end(): bool
-    + allowed_actions(): list[Action]
+    + state(): GameState
     + step(action: Action): GameState
+    + reset(): GameState
 }
 
 Game o--> GameState
