@@ -1,0 +1,36 @@
+﻿@startuml alpha_zero
+
+interface Action {
+    + value(): Any
+}
+
+interface GameState {
+    + depth: int
+    + current_player(): int
+    + player0_board(): list[int]
+    + player1_board(): list[int]
+    + is_end(): bool
+    + allowed_actions(): list[Action]
+    + take_action(action: Action): GameState
+}
+
+class Game {
+    - _state: GameState
+    + depth(): int
+    + current_player(): int
+    + player0_board(): list[int]
+    + player1_board(): list[int]
+    + is_end(): bool
+    + allowed_actions(): list[Action]
+    + step(action: Action): GameState
+}
+
+Game o--> GameState
+Game -> Action
+GameState -> Action
+
+GameState <|.. ReversiState
+Action <|.. ReversiAction
+ReversiState -> ReversiAction
+
+@enduml
