@@ -32,7 +32,8 @@ class ReversiDualNetwork:
         a, b, c = ReversiDualNetwork.INPUT_SHAPE
         batch_size = 1
         x = input.reshape((batch_size, a, b, c))
-        return self._model.predict(x, batch_size=batch_size)
+        ps, v = self._model.predict(x, batch_size=batch_size)
+        return ps[0], v[0]
 
     def _exists_model_file(self) -> bool:
         os.path.exists(ReversiDualNetwork.MODEL_FILE_PATH)

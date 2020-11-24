@@ -42,18 +42,19 @@ class ReversiAction(Action):
     _pass: bool = False
 
     @property
-    def value(self):
+    def value(self) -> int:
         return ReversiState.board_size * self._row + self._col \
             if not self._pass \
             else ReversiState.board_size * ReversiState.board_size
 
     @property
-    def pos(self):
+    def pos(self) -> (int, int):
         return (self._row, self._col) \
             if not self._pass \
             else(-1, -1)
 
-    def is_pass(self):
+    @property
+    def is_pass(self) -> bool:
         return self._pass
 
 
@@ -88,7 +89,7 @@ class ReversiState(GameState):
 
     @property
     def is_current_player_winner(self) -> bool:
-        if not self.is_end():
+        if not self.is_end:
             return False
         player0_score = self.player0_board.count(1)
         player1_score = self.player1_board.count(1)
@@ -98,13 +99,13 @@ class ReversiState(GameState):
 
     @property
     def is_draw(self) -> bool:
-        if not self.is_end():
+        if not self.is_end:
             return False
         return self.player0_board.count(1) == self.player1_board.count(1)
 
     @property
     def is_current_player_loser(self) -> bool:
-        if not self.is_end():
+        if not self.is_end:
             return False
 
         return not self.is_draw and not self.is_current_player_winner
@@ -118,6 +119,10 @@ class ReversiState(GameState):
                 if self._is_allowed_action(action):
                     actions.append(action)
 
+        if not actions:
+            # 合法手がないのでパス
+            actions.append(ReversiAction(-1, -1, True))
+
         return actions
 
     def take_action(self, action: Action) -> GameState:
@@ -127,13 +132,13 @@ class ReversiState(GameState):
             # 終了したゲームなのでアクションは受け付けない
             return None
 
-        if action.is_pass() and len(self.allowed_actions) > 0:
+        if action.is_pass and len(self.allowed_actions) > 1:
             # 合法手があるにも関わらずパスすることはできない
             return None
 
         flip_dirs = []
         board = deepcopy(self._board)
-        if not action.is_pass() \
+        if not action.is_pass \
                 and self._is_allowed_action(action, flip_dirs):
             r, c = action.pos
             board[r][c] = self.player_square
@@ -147,7 +152,8 @@ class ReversiState(GameState):
                     c_it += d[0]
 
         next_state = ReversiState(self.depth + 1, board)
-        if action.is_pass and len(next_state.allowed_actions) == 0:
+        if action.is_pass and len(next_state.allowed_actions) == 1:
+            # 2連続パスなので終了
             next_state = ReversiState(next_state.depth, board, True)
 
         return next_state
@@ -159,6 +165,18 @@ class ReversiState(GameState):
     @property
     def opposing_square(self) -> Square:
         return Square.WHITE if self.current_player == 0 else Square.BLACK
+
+    def to_string(self) -> str:
+        s = ' |A|B|C|D|E|F|G|H|\n'
+        for i, row in enumerate(self._board):
+            s += f'{i}|'
+            for square in row:
+                s += 'o ' if square == Square.BLACK \
+                    else 'x ' if square == Square.WHITE \
+                    else '  '
+            s += '\n'
+
+        return s
 
     def _is_valid_position(self, row: int, col: int) -> bool:
         return row >= 0 and row < ReversiState.board_size \
