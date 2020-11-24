@@ -1,7 +1,7 @@
 ﻿import itertools
 from copy import deepcopy
 from enum import Enum
-from typing import Tuple
+from typing import Tuple, List
 from dataclasses import dataclass
 from dataclasses import field
 from ..game import GameState
@@ -25,7 +25,7 @@ class Square(Enum):
     EMPTY = 2
 
 
-def create_initial_board(board_size: int) -> list[list[Square]]:
+def create_initial_board(board_size: int) -> List[List[Square]]:
     board = [[Square.EMPTY] * board_size for _ in range(board_size)]
 
     p = (board_size // 2) - 1
@@ -60,7 +60,7 @@ class ReversiAction(Action):
 @dataclass(frozen=True)
 class ReversiState(GameState):
     _depth: int = 0
-    _board: list[list[Square]] = field(
+    _board: List[List[Square]] = field(
         default_factory=lambda: create_initial_board(ReversiState.board_size))
     _is_end: bool = False
 
@@ -75,11 +75,11 @@ class ReversiState(GameState):
         return self._depth % 2
 
     @property
-    def player0_board(self) -> list[int]:
+    def player0_board(self) -> List[int]:
         return [(1 if i == Square.BLACK else 0) for i in itertools.chain.from_iterable(self._board)]
 
     @property
-    def player1_board(self) -> list[int]:
+    def player1_board(self) -> List[int]:
         return [(1 if i == Square.WHITE else 0) for i in itertools.chain.from_iterable(self._board)]
 
     @property
@@ -87,7 +87,30 @@ class ReversiState(GameState):
         return self._is_end
 
     @property
-    def allowed_actions(self) -> list[Action]:
+    def is_current_player_winner(self) -> bool:
+        if not self.is_end():
+            return False
+        player0_score = self.player0_board.count(1)
+        player1_score = self.player1_board.count(1)
+        return player0_score > player1_score \
+            if self.current_player == 0 \
+            else player1_score > player0_score
+
+    @property
+    def is_draw(self) -> bool:
+        if not self.is_end():
+            return False
+        return self.player0_board.count(1) == self.player1_board.count(1)
+
+    @property
+    def is_current_player_loser(self) -> bool:
+        if not self.is_end():
+            return False
+
+        return not self.is_draw and not self.is_current_player_winner
+
+    @property
+    def allowed_actions(self) -> List[Action]:
         actions = []
         for r in range(8):
             for c in range(8):

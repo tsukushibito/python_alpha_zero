@@ -1,9 +1,11 @@
 ﻿from alpha_zero.game import Game
 from alpha_zero.reversi import ReversiState
 from alpha_zero.reversi import ReversiAction
+import numpy as np
 
 
 def test_reversi():
+
     game = Game(ReversiState())
     state = game.state
     p0 = state.player0_board

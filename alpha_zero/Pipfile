@@ -8,6 +8,7 @@ pytest = "*"
 pylint = "*"
 autopep8 = "*"
 rope = "*"
+tensorflow = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.8"
