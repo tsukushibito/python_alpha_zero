@@ -55,6 +55,8 @@ class MctsNode:
             r, c, s = ReversiDualNetwork.INPUT_SHAPE
             input = temp.reshape((s, r, c)).transpose()
             policies, value = self.dual_network.predict(input)
+            # policies = np.array([0.0] * 65)
+            # value = np.array([0.0])
 
             # 累計価値と試行回数の更新
             self.cumulative_value += value
@@ -104,7 +106,7 @@ class MctsNode:
 def search_with_mtcs(dual_network: ReversiDualNetwork,
                      state: ReversiState,
                      temperature: float,
-                     evaluation_count: int = DEFAULT_EVALUATION_COUNT) -> ReversiAction:
+                     evaluation_count: int = DEFAULT_EVALUATION_COUNT) -> List[float]:
     # 現在の局面のノードの作成
     root_node = MctsNode(state, 0, dual_network)
 
@@ -126,8 +128,11 @@ def search_with_mtcs(dual_network: ReversiDualNetwork,
 
         scores = boltzman(scores, temperature)
 
-    next_action = np.random.choice(state.allowed_actions, p=scores)
-    return next_action
+    return scores
+
+
+def choice_next_action(allowed_actions: List[ReversiAction], scores: List[float]) -> ReversiAction:
+    return np.random.choice(allowed_actions, p=scores)
 
 
 # 動作確認

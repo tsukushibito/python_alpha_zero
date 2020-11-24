@@ -10,7 +10,7 @@ import os
 class ReversiDualNetwork:
 
     MODEL_DIRECTORY = './model/'
-    MODEL_FILE_PATH = MODEL_DIRECTORY + 'model.h5'
+    MODEL_FILE_PATH = MODEL_DIRECTORY + 'reversi.h5'
 
     CNN_FILTER_COUNT = 128  # 畳み込み層のカーネル数（本家は256）
     RESNET_COUNT = 16  # 残差ブロックの数（本家は19）
