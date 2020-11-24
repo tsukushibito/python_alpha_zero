@@ -1,7 +1,12 @@
 ﻿from alpha_zero.game import Game
 from alpha_zero.reversi import ReversiDualNetwork
 from alpha_zero.reversi import ReversiState
-from alpha_zero.reversi import search_with_mtcs, choice_next_action, run_self_play
+from alpha_zero.reversi import search_with_mtcs
+from alpha_zero.reversi import choice_next_action
+from alpha_zero.reversi import run_self_match
+from alpha_zero.reversi import save_self_match_record
+from alpha_zero.reversi import load_self_match_record
+
 import numpy as np
 
 
@@ -26,7 +31,8 @@ def test_reversi_mtcs():
 
 
 def test_reversi_self_play():
-    run_self_play(1, 1.0)
+    record = run_self_match(1, 1.0)
+    save_self_match_record(record)
 
 
 if __name__ == "__main__":

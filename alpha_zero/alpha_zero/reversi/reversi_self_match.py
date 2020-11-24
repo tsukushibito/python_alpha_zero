@@ -11,7 +11,7 @@ RECORD_DATA_DIR = './record/'
 RECORD_DATA_FILE_EXT = '.reversi.record'
 
 
-def _self_play_impl(dual_network: ReversiDualNetwork, temperature: float):
+def _self_match_impl(dual_network: ReversiDualNetwork, temperature: float):
     record = []
 
     state = ReversiState()
@@ -54,7 +54,7 @@ def _self_play_impl(dual_network: ReversiDualNetwork, temperature: float):
     return record
 
 
-def _save_record(record: List):
+def save_self_match_record(record: List):
     now = datetime.now()
     os.makedirs(RECORD_DATA_DIR, exist_ok=True)
     name = '{:04}{:02}{:02}{:02}{:02}{:02}'.format(
@@ -70,19 +70,23 @@ def _save_record(record: List):
         pickle.dump(record, f)
 
 
-def run_self_play(game_count: int, temperature: float):
+def load_self_match_record() -> List:
+    pass
+
+
+def run_self_match(game_count: int, temperature: float) -> List:
     record = []
 
     dual_network = ReversiDualNetwork()
 
     for i in range(game_count):
-        print(f'SelfPlay {i+1}/{game_count} starting...')
-        r = _self_play_impl(dual_network, temperature)
+        print(f'SelfMatch {i+1}/{game_count} starting...')
+        r = _self_match_impl(dual_network, temperature)
         record.extend(r)
 
-        print(f'SelfPlay {i+1}/{game_count} end')
+        print(f'SelfMatch {i+1}/{game_count} end')
 
     dual_network.clear_session
     del dual_network
 
-    _save_record(record)
+    return record
