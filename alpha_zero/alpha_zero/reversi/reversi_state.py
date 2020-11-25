@@ -4,8 +4,10 @@ from enum import Enum
 from typing import Tuple, List
 from dataclasses import dataclass
 from dataclasses import field
+import numpy as np
 from ..game import GameState
 from ..game import Action
+from .reversi_dual_network import ReversiDualNetwork
 
 
 class Dir(Enum):
@@ -152,7 +154,9 @@ class ReversiState(GameState):
                     c_it += d[0]
 
         next_state = ReversiState(self.depth + 1, board)
-        if action.is_pass and len(next_state.allowed_actions) == 1:
+        if action.is_pass \
+                and len(next_state.allowed_actions) == 1 \
+                and next_state.allowed_actions[0].is_pass:
             # 2連続パスなので終了
             next_state = ReversiState(next_state.depth, board, True)
 
@@ -177,6 +181,19 @@ class ReversiState(GameState):
             s += '\n'
 
         return s
+
+    def to_model_input(self) -> np.ndarray:
+        temp = None
+        if self.current_player == 0:
+            temp = np.array([self.player0_board,
+                             self.player1_board])
+        else:
+            temp = np.array([self.player1_board,
+                             self.player0_board])
+        r, c, s = ReversiDualNetwork.INPUT_SHAPE
+        input = temp.reshape((s, r, c)).transpose()
+
+        return input
 
     def _is_valid_position(self, row: int, col: int) -> bool:
         return row >= 0 and row < ReversiState.board_size \

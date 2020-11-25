@@ -5,7 +5,8 @@ from alpha_zero.reversi import search_with_mtcs
 from alpha_zero.reversi import choice_next_action
 from alpha_zero.reversi import run_self_match
 from alpha_zero.reversi import save_self_match_record
-from alpha_zero.reversi import load_self_match_record
+from alpha_zero.reversi import load_last_self_match_record
+from alpha_zero.reversi import record_to_model_fitting_data
 
 import numpy as np
 
@@ -20,7 +21,7 @@ def test_reversi_mtcs():
     while not state.is_end:
 
         # 行動の取得
-        scores = search_with_mtcs(dual_network, state, 1.0, 10)
+        scores = search_with_mtcs(dual_network, state, 1.0, 5)
         action = choice_next_action(state.allowed_actions, scores)
 
         # 次の状態の取得
@@ -30,11 +31,19 @@ def test_reversi_mtcs():
         print(state.to_string())
 
 
-def test_reversi_self_play():
-    record = run_self_match(1, 1.0)
+def test_reversi_self_match():
+    record = run_self_match(1, 1.0, 5)
     save_self_match_record(record)
+
+
+def test_train_network():
+    dual_network = ReversiDualNetwork()
+    record = load_last_self_match_record()
+    input, target = record_to_model_fitting_data(record)
+    dual_network.fit(input, target)
 
 
 if __name__ == "__main__":
     # test_reversi_mtcs()
-    test_reversi_self_play()
+    # test_reversi_self_match()
+    test_train_network()

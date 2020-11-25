@@ -1,6 +1,7 @@
 from typing import Callable, List
 from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input, Layer
 from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.callbacks import LearningRateScheduler, LambdaCallback
 from tensorflow.keras.regularizers import l2
 from tensorflow.keras import backend as K
 import numpy as np
@@ -19,6 +20,8 @@ class ReversiDualNetwork:
     OUT_POLICY_COUNT = 65  # 出力行動数(配置先(8*8)+パス(1))
     OUT_VALUE_COUNT = 1  # 出力価値数
 
+    EPOCHS = 100
+
     def __init__(self):
         if self._exists_model_file():
             self._model = load_model(ReversiDualNetwork.MODEL_FILE_PATH)
@@ -28,12 +31,44 @@ class ReversiDualNetwork:
     def clear_session(self):
         K.clear_session()
 
-    def predict(self, input: np.ndarray) -> List[np.ndarray]:
-        a, b, c = ReversiDualNetwork.INPUT_SHAPE
-        batch_size = 1
-        x = input.reshape((batch_size, a, b, c))
-        ps, v = self._model.predict(x, batch_size=batch_size)
+    def predict(self, input: np.ndarray, batch_size: int = 1) -> List[np.ndarray]:
+        # a, b, c = ReversiDualNetwork.INPUT_SHAPE
+        # x = input.reshape((batch_size, a, b, c))
+        ps, v = self._model.predict(input, batch_size=batch_size)
         return ps[0], v[0]
+
+    def fit(self,
+            input: np.ndarray,
+            target: List[np.ndarray],
+            batch_size: int = 128):
+        self._model.compile(
+            loss=['categorical_crossentropy'], optimizer='adam')
+
+        # 学習率
+        def step_decay(epoch):
+            x = 0.001
+            if epoch >= 50:
+                x = 0.0005
+            if epoch >= 80:
+                x = 0.00025
+            return x
+        lr_decay = LearningRateScheduler(step_decay)
+
+        # 出力
+        print_callback = LambdaCallback(
+            on_epoch_begin=lambda epoch, logs:
+            print('\rTrain {}/{}'.format(epoch + 1, ReversiDualNetwork.EPOCHS), end=''))
+
+        # 学習の実行
+        self._model.fit(input, target,
+                        batch_size=batch_size,
+                        epochs=ReversiDualNetwork.EPOCHS,
+                        verbose=0,
+                        callbacks=[lr_decay, print_callback])
+        print('')
+
+        self._model.save(ReversiDualNetwork.MODEL_FILE_PATH)
+        K.clear_session()
 
     def _exists_model_file(self) -> bool:
         os.path.exists(ReversiDualNetwork.MODEL_FILE_PATH)
@@ -98,7 +133,8 @@ if __name__ == '__main__':
     dual_network = ReversiDualNetwork()
     a = [0] * 64
     b = [0] * 64
-    p, v = dual_network.predict(np.array([a, b]))
+    input = np.array([a, b])
+    p, v = dual_network.predict(np.array([a, b]), 1)
     dual_network.clear_session()
     print(p)
     print(v)
