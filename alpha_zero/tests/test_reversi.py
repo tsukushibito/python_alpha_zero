@@ -44,6 +44,6 @@ def test_train_network():
 
 
 if __name__ == "__main__":
-    # test_reversi_mtcs()
+    test_reversi_mtcs()
     # test_reversi_self_match()
-    test_train_network()
+    # test_train_network()

@@ -135,7 +135,7 @@ if __name__ == '__main__':
     # ゲーム終了までループ
     while True:
         # ゲーム終了時
-        if state.is_end():
+        if state.is_end:
             break
 
         # 行動の取得
@@ -146,7 +146,3 @@ if __name__ == '__main__':
 
         # 文字列表示
         print(state)
-
-
-class ReversiMcts:
-    pass

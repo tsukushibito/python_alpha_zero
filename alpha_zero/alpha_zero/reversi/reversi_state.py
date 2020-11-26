@@ -2,8 +2,6 @@
 from copy import deepcopy
 from enum import Enum
 from typing import Tuple, List
-from dataclasses import dataclass
-from dataclasses import field
 import numpy as np
 from ..game import GameState
 from ..game import Action
@@ -37,11 +35,11 @@ def create_initial_board(board_size: int) -> List[List[Square]]:
     return board
 
 
-@dataclass(frozen=True)
 class ReversiAction(Action):
-    _row: int = 0
-    _col: int = 0
-    _pass: bool = False
+    def __init__(self, row: int, col: int, is_pass: bool = False):
+        self._row: int = row
+        self._col: int = col
+        self._pass: bool = is_pass
 
     @property
     def value(self) -> int:
@@ -60,36 +58,39 @@ class ReversiAction(Action):
         return self._pass
 
 
-@dataclass(frozen=True)
 class ReversiState(GameState):
-    _depth: int = 0
-    _board: List[List[Square]] = field(
-        default_factory=lambda: create_initial_board(ReversiState.board_size))
-    _is_end: bool = False
-
     board_size: int = 8
 
-    @property
+    def __init__(self,
+                 depth: int = 0,
+                 board: List[List[Square]] = None,
+                 is_end: bool = False):
+        self._depth = depth
+        self._board: List[List[Square]] = board if board != None else create_initial_board(
+            ReversiState.board_size)
+        self._is_end = is_end
+
+    @ property
     def depth(self) -> int:
         return self._depth
 
-    @property
+    @ property
     def current_player(self) -> int:
         return self._depth % 2
 
-    @property
+    @ property
     def player0_board(self) -> List[int]:
         return [(1 if i == Square.BLACK else 0) for i in itertools.chain.from_iterable(self._board)]
 
-    @property
+    @ property
     def player1_board(self) -> List[int]:
         return [(1 if i == Square.WHITE else 0) for i in itertools.chain.from_iterable(self._board)]
 
-    @property
+    @ property
     def is_end(self) -> bool:
         return self._is_end
 
-    @property
+    @ property
     def is_current_player_winner(self) -> bool:
         if not self.is_end:
             return False
@@ -99,20 +100,20 @@ class ReversiState(GameState):
             if self.current_player == 0 \
             else player1_score > player0_score
 
-    @property
+    @ property
     def is_draw(self) -> bool:
         if not self.is_end:
             return False
         return self.player0_board.count(1) == self.player1_board.count(1)
 
-    @property
+    @ property
     def is_current_player_loser(self) -> bool:
         if not self.is_end:
             return False
 
         return not self.is_draw and not self.is_current_player_winner
 
-    @property
+    @ property
     def allowed_actions(self) -> List[Action]:
         actions = []
         for r in range(8):
@@ -162,11 +163,11 @@ class ReversiState(GameState):
 
         return next_state
 
-    @property
+    @ property
     def player_square(self) -> Square:
         return Square.BLACK if self.current_player == 0 else Square.WHITE
 
-    @property
+    @ property
     def opposing_square(self) -> Square:
         return Square.WHITE if self.current_player == 0 else Square.BLACK
 
