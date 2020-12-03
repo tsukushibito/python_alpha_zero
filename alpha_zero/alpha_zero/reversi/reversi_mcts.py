@@ -54,7 +54,7 @@ class MctsNode:
                                  self.state.player0_board])
             r, c, s = ReversiDualNetwork.INPUT_SHAPE
             input = temp.reshape((s, r, c)).transpose()
-            policies, value = self.dual_network.predict(input)
+            policies, value = self.dual_network.predict(np.array([input]))
             # policies = np.array([0.0] * 65)
             # value = np.array([0.0])
 
