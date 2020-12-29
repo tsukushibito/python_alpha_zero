@@ -45,18 +45,8 @@ class MctsNode:
         # 子ノードが存在しない時
         if not self.child_nodes:
             # ニューラルネットワークの推論で方策と価値を取得
-            temp = None
-            if self.state.current_player == 0:
-                temp = np.array([self.state.player0_board,
-                                 self.state.player1_board])
-            else:
-                temp = np.array([self.state.player1_board,
-                                 self.state.player0_board])
-            r, c, s = ReversiDualNetwork.INPUT_SHAPE
-            input = temp.reshape((s, r, c)).transpose()
-            policies, value = self.dual_network.predict(input)
-            # policies = np.array([0.0] * 65)
-            # value = np.array([0.0])
+            policies, value = self.dual_network.predict(
+                np.array([self.state.to_model_input()]), 1)
 
             # 累計価値と試行回数の更新
             self.cumulative_value += value
@@ -145,7 +135,7 @@ if __name__ == '__main__':
     # ゲーム終了までループ
     while True:
         # ゲーム終了時
-        if state.is_end():
+        if state.is_end:
             break
 
         # 行動の取得
@@ -156,7 +146,3 @@ if __name__ == '__main__':
 
         # 文字列表示
         print(state)
-
-
-class ReversiMcts:
-    pass

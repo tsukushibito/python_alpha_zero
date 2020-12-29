@@ -1,4 +1,4 @@
-﻿FROM python:3.8
+﻿FROM python:3.6.9
 
 RUN apt-get update
 RUN apt-get  install -y vim less graphviz default-jre

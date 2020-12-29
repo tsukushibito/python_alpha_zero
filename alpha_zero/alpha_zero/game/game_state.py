@@ -1,11 +1,9 @@
 ﻿from abc import ABC, abstractmethod
 from typing import Any, List
-from dataclasses import dataclass
 from copy import copy
 from .action import Action
 
 
-@dataclass
 class GameState(ABC):
     @property
     @abstractmethod
