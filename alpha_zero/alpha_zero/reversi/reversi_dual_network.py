@@ -29,8 +29,10 @@ class ReversiDualNetwork:
         K.clear_session()
 
     def predict(self, input: np.ndarray) -> List[np.ndarray]:
-        batch_size = len(input)
-        ps, v = self._model.predict(input, batch_size=batch_size)
+        a, b, c = ReversiDualNetwork.INPUT_SHAPE
+        batch_size = 1
+        x = input.reshape((batch_size, a, b, c))
+        ps, v = self._model.predict(x, batch_size=batch_size)
         return ps[0], v[0]
 
     def _exists_model_file(self) -> bool:
@@ -96,7 +98,7 @@ if __name__ == '__main__':
     dual_network = ReversiDualNetwork()
     a = [0] * 64
     b = [0] * 64
-    p, v = dual_network.predict(np.array([1, a, b]))
+    p, v = dual_network.predict(np.array([a, b]))
     dual_network.clear_session()
     print(p)
     print(v)
