@@ -1,12 +1,13 @@
 ﻿from alpha_zero.game import Game
 from alpha_zero.reversi import ReversiState
 from alpha_zero.reversi import ReversiAction
+from alpha_zero.reversi import ReversiAiPlayer
 import numpy as np
 
 
 def test_reversi():
 
-    game = Game(ReversiState())
+    game = Game(ReversiState(), ReversiAiPlayer(), ReversiAiPlayer())
     state = game.state
     p0 = state.player0_board
     p1 = state.player1_board

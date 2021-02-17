@@ -4,9 +4,8 @@ from typing import List
 from datetime import datetime
 from pathlib import Path
 import numpy as np
-from . import ReversiDualNetwork
-from . import ReversiState
-from . import search_with_mtcs, choice_next_action
+from .ai import ReversiDualNetwork, search_with_mtcs, choice_next_action
+from .reversi_state import ReversiState
 
 
 RECORD_DATA_DIR = './record/'
@@ -32,18 +31,18 @@ def _self_match_impl(dual_network: ReversiDualNetwork, temperature: float, evalu
         record.append([board, policies, None])
 
         action = choice_next_action(state.allowed_actions, scores)
-        state = state.take_action(action)
+        state = state.apply_action(action)
 
     value = 0
     if state.current_player == 0:
-        if state.is_current_player_winner:
+        if state.is_player0_winner:
             value = 1
         elif state.is_draw:
             value = 0
         else:
             value = -1
     else:
-        if state.is_current_player_winner:
+        if state.is_player1_winner:
             value = -1
         elif state.is_draw:
             value = 0

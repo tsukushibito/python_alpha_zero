@@ -1,8 +1,8 @@
 ﻿from alpha_zero.game import Game
-from alpha_zero.reversi import ReversiDualNetwork
+from alpha_zero.reversi.ai import ReversiDualNetwork
+from alpha_zero.reversi.ai import search_with_mtcs
+from alpha_zero.reversi.ai import choice_next_action
 from alpha_zero.reversi import ReversiState
-from alpha_zero.reversi import search_with_mtcs
-from alpha_zero.reversi import choice_next_action
 from alpha_zero.reversi import run_self_match
 from alpha_zero.reversi import save_self_match_record
 from alpha_zero.reversi import load_last_self_match_record
@@ -25,7 +25,7 @@ def test_reversi_mtcs():
         action = choice_next_action(state.allowed_actions, scores)
 
         # 次の状態の取得
-        state = state.take_action(action)
+        state = state.apply_action(action)
 
         # 文字列表示
         print(state.to_string())

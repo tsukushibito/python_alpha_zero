@@ -31,6 +31,14 @@ class GameState(ABC):
         pass
 
     @property
+    def is_player0_winner(self) -> bool:
+        pass
+
+    @property
+    def is_player1_winner(self) -> bool:
+        pass
+
+    @property
     def is_current_player_winner(self) -> bool:
         pass
 
@@ -39,14 +47,10 @@ class GameState(ABC):
         pass
 
     @property
-    def is_current_player_loser(self) -> bool:
-        pass
-
-    @property
     @abstractmethod
     def allowed_actions(self) -> List[Action]:
         pass
 
     @abstractmethod
-    def take_action(self, action: Action):
+    def apply_action(self, action: Action):
         pass

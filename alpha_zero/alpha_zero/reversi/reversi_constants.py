@@ -1,0 +1,1 @@
+﻿REVERSI_BOARD_SIZE = 8

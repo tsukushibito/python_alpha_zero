@@ -14,19 +14,30 @@ interface GameState {
     + take_action(action: Action): GameState
 }
 
+interface Player {
+    + take_action(state: GameState): Action
+}
+
 class Game {
     - _state: GameState
+    - _player0: Player
+    - _player1: Player
     + state(): GameState
-    + step(action: Action): GameState
+    + step(): GameState
     + reset(): GameState
 }
 
 Game o--> GameState
-Game -> Action
+Game o--> Player
 GameState -> Action
+Player -> GameState
+Player -> Action
 
 GameState <|.. ReversiState
 Action <|.. ReversiAction
+Player <|.. ReversiPlayer
 ReversiState -> ReversiAction
+ReversiPlayer -> ReversiAction
+ReversiPlayer -> ReversiState
 
 @enduml
