@@ -3,10 +3,10 @@ services:
     python3:
         build: .
         container_name: 'alpha_zero'
-        working_dir: /alpha_zero/
+        working_dir: /work/
         command: /bin/sh -c "while sleep 1000; do :; done"
         volumes:
-            - ./alpha_zero:/alpha_zero:cached
+            - .:/work:cached
             - python-packages:/root/.local/share
 volumes:
   python-packages:

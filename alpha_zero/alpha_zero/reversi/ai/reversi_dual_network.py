@@ -47,7 +47,7 @@ class ReversiDualNetwork:
             Tuple[np.ndarray]: 出力データ(ポリシー, バリュー)
         """
         ps, v = self._model.predict(input, batch_size=batch_size)
-        return ps[0], v[0]
+        return ps, v
 
     def fit(self,
             input: np.ndarray,
@@ -157,17 +157,30 @@ class ReversiDualNetworkPredictor:
         self._policies: np.ndarray
         self._values: np.ndarray
 
+    @property
+    def batch_size(self):
+        return self._batch_size
+
+    @batch_size.setter
+    def batch_size(self, v):
+        self._batch_size = v
+
     def predict(self, input: np.ndarray) -> Tuple[np.ndarray]:
         index = len(self._inputs)
         self._inputs.append(input)
+        print('[predict()] index: ' + str(index))
 
         if len(self._inputs) < self._batch_size:
             with self._condition:
+                print('[predict()] wait')
                 self._condition.wait()
         else:
             inputs = np.array(self._inputs)
+            print('[predict()] predict, shape: ' + str(np.shape(inputs)))
             self._policies, self._values = self._dual_network.predict(
                 inputs, self._batch_size)
+            with self._condition:
+                self._condition.notify_all()
 
         return self._policies[index], self._values[index]
 

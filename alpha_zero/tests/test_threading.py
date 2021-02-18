@@ -1,6 +1,7 @@
 ﻿from typing import List
-# from alpha_zero.reversi.ai import ReversiDualNetwork
+from alpha_zero.reversi.ai import ReversiDualNetwork, ReversiDualNetworkPredictor
 import threading
+import time
 import numpy as np
 
 
@@ -60,3 +61,32 @@ def test_threading():
 
     # print(np.shape(p))
     # print(np.shape(v))
+
+
+def test_predictor():
+    batch_size = 4
+    predictor = ReversiDualNetworkPredictor(batch_size)
+
+    b0 = [0 for _ in range(8 * 8)]
+    b1 = [1 for _ in range(8 * 8)]
+    input = np.array([b0, b1]).reshape((2, 8, 8)).transpose((1, 2, 0))
+    print(np.shape(input))
+
+    def predict():
+        p, v = predictor.predict(input)
+        print(p)
+        print(v)
+
+    threads = []
+    begin_t = time.time()
+    for _ in range(batch_size):
+        thread = threading.Thread(target=predict)
+        thread.start()
+        threads.append(thread)
+
+    for t in threads:
+        t.join()
+
+    end_t = time.time()
+
+    print('end: ' + str(end_t - begin_t) + 's')
