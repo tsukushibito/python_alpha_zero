@@ -1,4 +1,4 @@
-from typing import Callable, List
+from typing import Callable, List, Tuple
 from tensorflow.keras.layers import Activation, Add, BatchNormalization, Conv2D, Dense, GlobalAveragePooling2D, Input, Layer
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import LearningRateScheduler, LambdaCallback
@@ -36,15 +36,15 @@ class ReversiDualNetwork:
         """
         K.clear_session()
 
-    def predict(self, input: np.ndarray, batch_size: int = 1) -> List[np.ndarray]:
+    def predict(self, input: np.ndarray, batch_size: int = 1) -> Tuple[np.ndarray]:
         """推論
 
         Args:
-            input (np.ndarray): 入力データ
+            input (np.ndarray): 入力データ(縦, 横, 黒白)
             batch_size (int, optional): バッチサイズ. Defaults to 1.
 
         Returns:
-            List[np.ndarray]: 出力データ
+            Tuple[np.ndarray]: 出力データ(ポリシー, バリュー)
         """
         ps, v = self._model.predict(input, batch_size=batch_size)
         return ps[0], v[0]
@@ -148,21 +148,28 @@ class ReversiDualNetwork:
         return x
 
 
-class ReversiDualNetworkPredicter:
-    def __init__(self, batch_size: int):
+class ReversiDualNetworkPredictor:
+    def __init__(self, batch_size: int) -> None:
         self._dual_network: ReversiDualNetwork = ReversiDualNetwork()
         self._batch_size: int = batch_size
         self._inputs: List[np.ndarray] = []
         self._condition: threading.Condition = threading.Condition()
+        self._policies: np.ndarray
+        self._values: np.ndarray
 
-    def run(self):
-        pass
+    def predict(self, input: np.ndarray) -> Tuple[np.ndarray]:
+        index = len(self._inputs)
+        self._inputs.append(input)
 
-    def _task(self):
-        with self._condition:
-            while len(self._inputs) < batch_size:
+        if len(self._inputs) < self._batch_size:
+            with self._condition:
                 self._condition.wait()
-        pass
+        else:
+            inputs = np.array(self._inputs)
+            self._policies, self._values = self._dual_network.predict(
+                inputs, self._batch_size)
+
+        return self._policies[index], self._values[index]
 
 
 if __name__ == '__main__':

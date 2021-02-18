@@ -5,24 +5,26 @@ from tensorflow.keras.models import load_model
 from pathlib import Path
 from ..reversi_state import ReversiState
 from ..reversi_action import ReversiAction
-from .reversi_dual_network import ReversiDualNetwork
+from .reversi_dual_network import ReversiDualNetwork, ReversiDualNetworkPredictor
 import numpy as np
 
 DEFAULT_EVALUATION_COUNT = 50  # 1推論あたりのシミュレーション回数（本家は1600）
 
 
-class ReversiMctsNode:
-    # モンテカルロ木探索のノードの定義
+class _ReversiMctsNode:
+    """リバーシ用MCTSノードクラス
+    """
+
     C_PUCT = 1.0
 
     # ノードの初期化
-    def __init__(self, state: ReversiState, policy: float, dual_network: ReversiDualNetwork):
+    def __init__(self, state: ReversiState, policy: float, predictor: ReversiDualNetworkPredictor):
         self.state: ReversiState = state  # 状態
         self.policy: float = policy  # 方策
-        self.dual_network: ReversiDualNetwork = dual_network
+        self.predictor: ReversiDualNetworkPredictor = predictor
         self.cumulative_value: float = 0  # 累計価値
         self.sim_count: int = 0  # 試行回数
-        self.child_nodes: List[ReversiMctsNode] = None  # 子ノード群
+        self.child_nodes: List[_ReversiMctsNode] = None  # 子ノード群
 
     # 局面の価値の計算
     def evaluate(self):
@@ -45,8 +47,14 @@ class ReversiMctsNode:
         # 子ノードが存在しない時
         if not self.child_nodes:
             # ニューラルネットワークの推論で方策と価値を取得
-            policies, value = self.dual_network.predict(
-                np.array([self.state.to_model_input()]), 1)
+            if self.state.current_player == 0:
+                input = np.array(
+                    [self.state.player0_board, self.state.player1_board])
+            else:
+                input = np.array(
+                    [self.state.player1_board, self.state.player0_board])
+            input = input.transpose((2, 0, 1))
+            policies, value = self.predictor.predict(input)
 
             # 累計価値と試行回数の更新
             self.cumulative_value += value
@@ -60,15 +68,15 @@ class ReversiMctsNode:
             self.child_nodes = []
             for action, policy in zip(self.state.allowed_actions, policies):
                 self.child_nodes.append(
-                    ReversiMctsNode(self.state.apply_action(action),
-                                    policy,
-                                    self.dual_network))
+                    _ReversiMctsNode(self.state.apply_action(action),
+                                     policy,
+                                     self.predictor))
             return value
 
         # 子ノードが存在する時
         else:
             # アーク評価値が最大の子ノードの評価で価値を取得
-            value = -self.select_child_node().evaluate()
+            value = -self._select_child_node().evaluate()
 
             # 累計価値と試行回数の更新
             self.cumulative_value += value
@@ -76,7 +84,7 @@ class ReversiMctsNode:
             return value
 
     # アーク評価値が最大の子ノードを取得
-    def select_child_node(self):
+    def _select_child_node(self):
         # アーク評価値の計算
         # 子ノードの累計試行回数
         t = reduce(lambda a, b: a + b.sim_count, self.child_nodes, 0)
@@ -86,11 +94,23 @@ class ReversiMctsNode:
             n = child_node.sim_count
             p = child_node.policy
             v = (-w/n if n != 0 else 0) + \
-                ReversiMctsNode.C_PUCT * p * (sqrt(t)/(1 + n))
+                _ReversiMctsNode.C_PUCT * p * (sqrt(t)/(1 + n))
             pucb_values.append(v)
 
         # アーク評価値が最大の子ノードを返す
         return self.child_nodes[np.argmax(pucb_values)]
+
+
+class ReversiMcts:
+    def __init__(self,
+                 predictor: ReversiDualNetworkPredictor) -> None:
+        self._predictor = predictor
+
+    def search(self,
+               state: ReversiState,
+               temperature: float,
+               evaluation_count: int = DEFAULT_EVALUATION_COUNT):
+        pass
 
 
 def search_with_mtcs(dual_network: ReversiDualNetwork,
@@ -98,7 +118,7 @@ def search_with_mtcs(dual_network: ReversiDualNetwork,
                      temperature: float,
                      evaluation_count: int = DEFAULT_EVALUATION_COUNT) -> List[float]:
     # 現在の局面のノードの作成
-    root_node = ReversiMctsNode(state, 0, dual_network)
+    root_node = _ReversiMctsNode(state, 0, dual_network)
 
     # 複数回の評価の実行
     for _ in range(evaluation_count):

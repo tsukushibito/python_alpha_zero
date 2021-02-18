@@ -1,52 +1,31 @@
 ﻿from typing import List
+# from alpha_zero.reversi.ai import ReversiDualNetwork
 import threading
+import numpy as np
 
 
 def test_threading():
     class Test:
         def __init__(self) -> None:
-            self._task_condition: threading.Condition = threading.Condition()
-            self._result_condition: threading.Condition = threading.Condition()
+            self._condition: threading.Condition = threading.Condition()
             self._datas: List[int] = []
             self._converted_datas: List[int] = []
-            self._is_end: bool = False
-            self._task_thread: threading.Thread
-
-        def run(self) -> None:
-            self._task_thread = threading.Thread(target=self._task)
-            self._task_thread.start()
 
         def add_data(self, data: int) -> int:
+            index = len(self._datas)
             self._datas.append(data)
-            index = len(self._datas) - 1
-            if len(self._datas) >= 10:
-                with self._task_condition:
-                    self._task_condition.notify_all()
-            with self._result_condition:
-                self._result_condition.wait()
+
+            if len(self._datas) < 10:
+                with self._condition:
+                    self._condition.wait()
+            else:
+                self._converted_datas = list(map(lambda v: v * v, self._datas))
+                with self._condition:
+                    self._condition.notify_all()
+
             return self._converted_datas[index]
 
-        def end(self) -> None:
-            self._is_end = True
-            with self._task_condition, self._result_condition:
-                self._task_condition.notify_all()
-                self._result_condition.notify_all()
-
-        def _task(self):
-            with self._task_condition:
-                while not self._is_end:
-                    if len(self._datas) < 10:
-                        self._task_condition.wait()
-                    else:
-                        print('converting')
-                        self._converted_datas = [i**2 for i in self._datas]
-                        print('converted')
-                        self._datas.clear()
-                        with self._result_condition:
-                            self._result_condition.notify_all()
-
     t = Test()
-    t.run()
 
     threads = []
     for _ in range(10):
@@ -64,4 +43,20 @@ def test_threading():
 
         print(results)
 
-    t.end()
+    b1 = np.arange(8 * 8).reshape((8, 8))
+    b2 = np.arange(8 * 8).reshape((8, 8))
+    a = np.array([b1, b2])
+    print(a)
+    a = a.reshape((2, 8, 8))
+    a = a.transpose()
+
+    print(a)
+    print(np.shape(a))
+
+    # network = ReversiDualNetwork()
+    # input = np.arange(8 * 8 * 2).reshape(1, 8, 8, 2)
+    # print(np.shape(input))
+    # p, v = network.predict(input)
+
+    # print(np.shape(p))
+    # print(np.shape(v))
