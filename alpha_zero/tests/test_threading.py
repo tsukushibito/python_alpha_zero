@@ -1,5 +1,5 @@
 ﻿from typing import List
-from alpha_zero.reversi.ai import ReversiDualNetwork, ReversiDualNetworkPredictor
+from alpha_zero.reversi import ReversiState, ai
 import threading
 import time
 import numpy as np
@@ -54,23 +54,14 @@ def test_threading():
     print(a)
     print(np.shape(a))
 
-    # network = ReversiDualNetwork()
-    # input = np.arange(8 * 8 * 2).reshape(1, 8, 8, 2)
-    # print(np.shape(input))
-    # p, v = network.predict(input)
-
-    # print(np.shape(p))
-    # print(np.shape(v))
-
 
 def test_predictor():
     batch_size = 64
-    predictor = ReversiDualNetworkPredictor(batch_size)
+    predictor = ai.ReversiDualNetworkPredictor(batch_size)
 
-    b0 = [0 for _ in range(8 * 8)]
-    b1 = [1 for _ in range(8 * 8)]
-    input = np.array([b0, b1]).reshape((2, 8, 8)).transpose((1, 2, 0))
-    print(np.shape(input))
+    state = ReversiState()
+    input = np.array([state.player0_board, state.player1_board]
+                     ).reshape((2, 8, 8)).transpose((1, 2, 0))
 
     def predict():
         p, v = predictor.predict(input)

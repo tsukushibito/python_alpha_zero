@@ -26,16 +26,6 @@ class Square(Enum):
     EMPTY = 2
 
 
-def create_initial_board(board_size: int) -> List[List[Square]]:
-    board = [[Square.EMPTY] * board_size for _ in range(board_size)]
-
-    p = (board_size // 2) - 1
-    board[p][p] = board[p + 1][p + 1] = Square.BLACK
-    board[p][p + 1] = board[p + 1][p] = Square.WHITE
-
-    return board
-
-
 class ReversiState(GameState):
     board_size: int = REVERSI_BOARD_SIZE
 
@@ -44,7 +34,7 @@ class ReversiState(GameState):
                  board: List[List[Square]] = None,
                  is_end: bool = False):
         self._depth = depth
-        self._board: List[List[Square]] = board if board != None else create_initial_board(
+        self._board: List[List[Square]] = board if board != None else self._create_initial_board(
             ReversiState.board_size)
         self._is_end = is_end
 
@@ -177,6 +167,15 @@ class ReversiState(GameState):
         input = temp.reshape((s, r, c)).transpose()
 
         return input
+
+    def _create_initial_board(self, board_size: int) -> List[List[Square]]:
+        board = [[Square.EMPTY] * board_size for _ in range(board_size)]
+
+        p = (board_size // 2) - 1
+        board[p][p] = board[p + 1][p + 1] = Square.BLACK
+        board[p][p + 1] = board[p + 1][p] = Square.WHITE
+
+        return board
 
     def _is_valid_position(self, row: int, col: int) -> bool:
         return row >= 0 and row < ReversiState.board_size \

@@ -47,13 +47,7 @@ class _ReversiMctsNode:
         # 子ノードが存在しない時
         if not self.child_nodes:
             # ニューラルネットワークの推論で方策と価値を取得
-            if self.state.current_player == 0:
-                input = np.array(
-                    [self.state.player0_board, self.state.player1_board])
-            else:
-                input = np.array(
-                    [self.state.player1_board, self.state.player0_board])
-            input = input.transpose((2, 0, 1))
+            input = self._create_model_input()
             policies, value = self.predictor.predict(input)
 
             # 累計価値と試行回数の更新
@@ -83,6 +77,16 @@ class _ReversiMctsNode:
             self.sim_count += 1
             return value
 
+    def _create_model_input(self):
+        if self.state.current_player == 0:
+            input = np.array(
+                [self.state.player0_board, self.state.player1_board])
+        else:
+            input = np.array(
+                [self.state.player1_board, self.state.player0_board])
+        input = input.transpose((2, 0, 1))
+        return input
+
     # アーク評価値が最大の子ノードを取得
     def _select_child_node(self):
         # アーク評価値の計算
@@ -109,8 +113,29 @@ class ReversiMcts:
     def search(self,
                state: ReversiState,
                temperature: float,
-               evaluation_count: int = DEFAULT_EVALUATION_COUNT):
-        pass
+               evaluation_count: int = DEFAULT_EVALUATION_COUNT) -> List[float]:
+        # 現在の局面のノードの作成
+        root_node = _ReversiMctsNode(state, 0, self._predictor)
+
+        # 複数回の評価の実行
+        for _ in range(evaluation_count):
+            root_node.evaluate()
+
+        # 合法手の確率分布(試行回数が多い手を採用)
+        scores = [n.sim_count for n in root_node.child_nodes]
+        if temperature == 0:  # 最大値のみ1
+            action = np.argmax(scores)
+            scores = np.zeros(len(scores))
+            scores[action] = 1
+        else:
+            # ボルツマン分布でバラつき付加
+            def boltzman(xs, temperature):
+                xs = [x ** (1 / temperature) for x in xs]
+                return [x / sum(xs) for x in xs]
+
+            scores = boltzman(scores, temperature)
+
+        return scores
 
 
 def search_with_mtcs(dual_network: ReversiDualNetwork,
