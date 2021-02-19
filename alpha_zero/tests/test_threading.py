@@ -64,7 +64,7 @@ def test_threading():
 
 
 def test_predictor():
-    batch_size = 4
+    batch_size = 64
     predictor = ReversiDualNetworkPredictor(batch_size)
 
     b0 = [0 for _ in range(8 * 8)]
