@@ -1,5 +1,5 @@
 ﻿from typing import List
-from alpha_zero.reversi import ReversiState, ai
+from alpha_zero.reversi import ReversiState, ReversiAction, ai
 import threading
 import time
 import numpy as np
@@ -56,22 +56,53 @@ def test_threading():
 
 
 def test_predictor():
-    batch_size = 64
+    batch_size = 32
     predictor = ai.ReversiDualNetworkPredictor(batch_size)
 
-    state = ReversiState()
-    input = np.array([state.player0_board, state.player1_board]
-                     ).reshape((2, 8, 8)).transpose((1, 2, 0))
-
-    def predict():
-        p, v = predictor.predict(input)
-        print(p)
-        print(v)
-
     threads = []
+    end_flags = {}
+
+    def play(index: int):
+        end_flags[threading.get_ident()] = False
+        state = ReversiState()
+        if index > 0:
+            state = state.apply_action(ReversiAction(5, 3))
+
+        if index > 1:
+            state = state.apply_action(ReversiAction(5, 4))
+
+        if index > 2:
+            state = state.apply_action(ReversiAction(4, 5))
+
+        print(state.to_string())
+        mcts = ai.ReversiMcts(predictor)
+        while not all(end_flags.values()):
+            if not state.is_end:
+                policies = mcts.search(
+                    state, temperature=1.0, evaluation_count=4)
+                msg = list(
+                    map(lambda p: str(p[0].pos) + ':' + str(p[1]), policies))
+                print('[' + str(threading.get_ident()) + '] ' + str(msg))
+                actions = [p[0] for p in policies]
+                scores = [p[1] for p in policies]
+                action = np.random.choice(actions, p=scores)
+                state = state.apply_action(action)
+                if state.is_end:
+                    end_flags[threading.get_ident()] = True
+                    print('[' + str(threading.get_ident()) + '] end')
+                    print(end_flags)
+            else:
+                dummy = np.arange(8 * 8 * 2).reshape((8, 8, 2))
+                predictor.predict(dummy)
+                # print('[' + str(i) + ']\n' + state.to_string())
+
+        predictor.cancel()
+
+        print('[' + str(threading.get_ident()) + ']\n' + state.to_string())
+
     begin_t = time.time()
-    for _ in range(batch_size):
-        thread = threading.Thread(target=predict)
+    for i in range(batch_size):
+        thread = threading.Thread(target=play, args=[i])
         thread.start()
         threads.append(thread)
 

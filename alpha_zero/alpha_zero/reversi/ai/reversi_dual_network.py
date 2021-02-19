@@ -166,23 +166,29 @@ class ReversiDualNetworkPredictor:
         self._batch_size = v
 
     def predict(self, input: np.ndarray) -> Tuple[np.ndarray]:
-        index = len(self._inputs)
-        self._inputs.append(input)
-        print('[predict()] index: ' + str(index))
-
-        if len(self._inputs) < self._batch_size:
-            with self._condition:
-                print('[predict()] wait')
+        with self._condition:
+            index = len(self._inputs)
+            self._inputs.append(input)
+            # print('[predict()] index: ' + str(index))
+            if len(self._inputs) < self._batch_size:
+                print('[predict()] id: ' +
+                      str(threading.get_ident()) + ', wait')
                 self._condition.wait()
-        else:
-            inputs = np.array(self._inputs)
-            print('[predict()] predict, shape: ' + str(np.shape(inputs)))
-            self._policies, self._values = self._dual_network.predict(
-                inputs, self._batch_size)
-            with self._condition:
+            else:
+                inputs = np.array(self._inputs)
+                print('[predict()] id: ' +
+                      str(threading.get_ident()) + ', predict')
+                print('----------------------')
+                self._policies, self._values = self._dual_network.predict(
+                    inputs, self._batch_size)
+                self._inputs.clear()
                 self._condition.notify_all()
 
         return self._policies[index], self._values[index]
+
+    def cancel(self) -> None:
+        with self._condition:
+            self._condition.notify_all()
 
 
 if __name__ == '__main__':

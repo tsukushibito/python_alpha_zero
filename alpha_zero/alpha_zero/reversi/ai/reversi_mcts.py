@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 from math import sqrt
 from functools import reduce
 from tensorflow.keras.models import load_model
@@ -42,6 +42,12 @@ class _ReversiMctsNode:
             # 累計価値と試行回数の更新
             self.cumulative_value += value
             self.sim_count += 1
+
+            if self.predictor.batch_size > 1:
+                # バッチ処理による並列実行に対応するため推論処理だけ行う
+                input = self._create_model_input()
+                self.predictor.predict(input)
+
             return value
 
         # 子ノードが存在しない時
@@ -84,7 +90,8 @@ class _ReversiMctsNode:
         else:
             input = np.array(
                 [self.state.player1_board, self.state.player0_board])
-        input = input.transpose((2, 0, 1))
+        r, c, d = ReversiDualNetwork.INPUT_SHAPE
+        input = input.reshape((d, r, c)).transpose((1, 2, 0))
         return input
 
     # アーク評価値が最大の子ノードを取得
@@ -113,7 +120,7 @@ class ReversiMcts:
     def search(self,
                state: ReversiState,
                temperature: float,
-               evaluation_count: int = DEFAULT_EVALUATION_COUNT) -> List[float]:
+               evaluation_count: int = DEFAULT_EVALUATION_COUNT) -> List[Tuple[ReversiAction, float]]:
         # 現在の局面のノードの作成
         root_node = _ReversiMctsNode(state, 0, self._predictor)
 
@@ -135,7 +142,11 @@ class ReversiMcts:
 
             scores = boltzman(scores, temperature)
 
-        return scores
+        policies = []
+        for action, score in zip(state.allowed_actions, scores):
+            policies.append((action, score))
+
+        return policies
 
 
 def search_with_mtcs(dual_network: ReversiDualNetwork,
